@@ -741,7 +741,8 @@ void deinit_mcp2515(MCP2515* mcp_can) {
 
 // free instance
 void free_mcp2515(MCP2515* mcp_can) {
-    free(mcp_can->spi);
+    // spi handle points to firmware global (furi_hal_spi_bus_handle_external),
+    // do NOT free it — only free the MCP2515 struct itself.
     free(mcp_can);
 }
 
