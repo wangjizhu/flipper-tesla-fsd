@@ -1,9 +1,8 @@
-#include "../tesla_fsd_app.h"
+#include "../can_tester_app.h"
 #include "../scenes_config/app_scene_functions.h"
 
 // CAN Test configuration
-#define CAN_TEST_TX_ID        0x7E0   // OBD-II diagnostic request ID (easy to spot)
-#define CAN_TEST_RX_ECHO_ID   0x7E8   // OBD-II diagnostic response ID
+#define CAN_TEST_TX_ID        0x7E0   // Standard diagnostic request ID
 #define CAN_TEST_INTERVAL_MS  500     // Send every 500ms
 #define CAN_TEST_POLL_MS      2       // Receive poll interval
 
@@ -28,7 +27,7 @@ typedef struct {
 static CanTestState test_state;
 
 static int32_t can_test_worker(void* context) {
-    TeslaFSDApp* app = context;
+    CanTesterApp* app = context;
     MCP2515* mcp = app->mcp_can;
     CANFRAME tx_frame;
     CANFRAME rx_frame;
@@ -121,7 +120,7 @@ static int32_t can_test_worker(void* context) {
     return 0;
 }
 
-static void can_test_update_widget(TeslaFSDApp* app) {
+static void can_test_update_widget(CanTesterApp* app) {
     widget_reset(app->widget);
 
     // Title
@@ -160,7 +159,7 @@ static void can_test_update_widget(TeslaFSDApp* app) {
             pos += snprintf(data_buf + pos, sizeof(data_buf) - pos, "%02X ",
                             test_state.last_rx_data[i]);
         }
-        data_buf[pos > 0 ? pos - 1 : 0] = '\0'; // trim trailing space
+        data_buf[pos > 0 ? pos - 1 : 0] = '\0';
     } else {
         snprintf(data_buf, sizeof(data_buf), "-- -- -- -- -- -- -- --");
     }
@@ -180,8 +179,8 @@ static void can_test_update_widget(TeslaFSDApp* app) {
         "[BACK] stop");
 }
 
-void tesla_fsd_scene_can_test_on_enter(void* context) {
-    TeslaFSDApp* app = context;
+void can_tester_scene_can_test_on_enter(void* context) {
+    CanTesterApp* app = context;
 
     // Reset test state
     memset(&test_state, 0, sizeof(CanTestState));
@@ -194,15 +193,15 @@ void tesla_fsd_scene_can_test_on_enter(void* context) {
     widget_add_string_multiline_element(
         app->widget, 64, 40, AlignCenter, AlignCenter, FontSecondary,
         "Initializing MCP2515...\n500kbps / Normal mode");
-    view_dispatcher_switch_to_view(app->view_dispatcher, TeslaFSDViewWidget);
+    view_dispatcher_switch_to_view(app->view_dispatcher, CanTesterViewWidget);
 
     // Start worker
     app->worker_thread = furi_thread_alloc_ex("CanTestWorker", 2048, can_test_worker, app);
     furi_thread_start(app->worker_thread);
 }
 
-bool tesla_fsd_scene_can_test_on_event(void* context, SceneManagerEvent event) {
-    TeslaFSDApp* app = context;
+bool can_tester_scene_can_test_on_event(void* context, SceneManagerEvent event) {
+    CanTesterApp* app = context;
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
@@ -226,8 +225,8 @@ bool tesla_fsd_scene_can_test_on_event(void* context, SceneManagerEvent event) {
     return consumed;
 }
 
-void tesla_fsd_scene_can_test_on_exit(void* context) {
-    TeslaFSDApp* app = context;
+void can_tester_scene_can_test_on_exit(void* context) {
+    CanTesterApp* app = context;
 
     if(app->worker_thread) {
         furi_thread_flags_set(furi_thread_get_id(app->worker_thread), WorkerFlagStop);
