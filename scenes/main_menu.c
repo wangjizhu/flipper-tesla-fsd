@@ -7,6 +7,7 @@ enum {
     MainMenuHW4,
     MainMenuLegacy,
     MainMenuExtras,
+    MainMenuCanTest,
     MainMenuSettings,
     MainMenuAbout,
 };
@@ -26,6 +27,7 @@ void tesla_fsd_scene_main_menu_on_enter(void* context) {
     submenu_add_item(app->submenu, "Force HW4 Mode", MainMenuHW4, main_menu_callback, app);
     submenu_add_item(app->submenu, "Force Legacy Mode", MainMenuLegacy, main_menu_callback, app);
     submenu_add_item(app->submenu, "Extras [BETA]", MainMenuExtras, main_menu_callback, app);
+    submenu_add_item(app->submenu, "CAN Test", MainMenuCanTest, main_menu_callback, app);
     submenu_add_item(app->submenu, "Settings", MainMenuSettings, main_menu_callback, app);
     submenu_add_item(app->submenu, "About", MainMenuAbout, main_menu_callback, app);
 
@@ -62,6 +64,10 @@ bool tesla_fsd_scene_main_menu_on_event(void* context, SceneManagerEvent event) 
             break;
         case MainMenuExtras:
             scene_manager_next_scene(app->scene_manager, tesla_fsd_scene_extras);
+            consumed = true;
+            break;
+        case MainMenuCanTest:
+            scene_manager_next_scene(app->scene_manager, tesla_fsd_scene_can_test);
             consumed = true;
             break;
         case MainMenuSettings:
