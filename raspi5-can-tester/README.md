@@ -22,46 +22,80 @@
 
 ### 接线方式（CAN Hack 模块 ↔ 树莓派 5）
 
-CAN Hack 模块的排针对应 Flipper Zero GPIO 排针位置。用杜邦线从模块排针连接到树莓派 5：
+CAN Hack 模块（[ElectronicCats Flipper Add-On: CAN Bus](https://electroniccats.com/store/flipper-addon-canbus/)）原本直接插在 Flipper Zero 顶部的 GPIO 排针上。模块有 **两排排针**，共 **18 个针脚**，对应 Flipper Zero 的完整 GPIO 排针。
 
-**Flipper Zero 排针定义（正面朝上，从左到右）：**
+现在改用**杜邦线**从模块排针连接到树莓派 5。**只需要接其中 6 根线**。
+
+#### CAN Hack 模块完整 18 针引脚对照表
+
+> **重要：** 模块有上下两排排针（J1 上排 8 针 + J2 下排 10 针）。SPI 信号全部在 **上排 J1**，只需要接上排的 6 个针脚。
+
 ```
-上排:  [3V3] [SWC] [PA7] [PA6] [PA4] [PB3] [PB2] [GND]
-        Pin1  Pin2  Pin3  Pin4  Pin5  Pin6  Pin7  Pin8
+═══════════════════════════════════════════════════════════════════════
+  CAN Hack 模块 — 上排 J1 (8针)
+  Flipper Zero 正面朝上、从左到右数
+═══════════════════════════════════════════════════════════════════════
+  针脚 │ Flipper GPIO │  信号     │ 是否需要 │ → 接到 RPi5
+  ─────┼──────────────┼───────────┼─────────┼──────────────────────
+  Pin1 │ 3V3          │ VCC 电源  │ ✅ 需要  │ → RPi5 Pin 1  (3.3V)
+  Pin2 │ SWC          │ 调试时钟  │ ❌ 不用  │
+  Pin3 │ PA7          │ SPI MOSI  │ ✅ 需要  │ → RPi5 Pin 19 (GPIO10/SPI0_MOSI)
+  Pin4 │ PA6          │ SPI MISO  │ ✅ 需要  │ → RPi5 Pin 21 (GPIO9/SPI0_MISO)
+  Pin5 │ PA4          │ SPI CS    │ ✅ 需要  │ → RPi5 Pin 24 (GPIO8/SPI0_CE0)
+  Pin6 │ PB3          │ SPI SCK   │ ✅ 需要  │ → RPi5 Pin 23 (GPIO11/SPI0_SCLK)
+  Pin7 │ PB2          │ (未使用)  │ ❌ 不用  │
+  Pin8 │ GND          │ 地线      │ ✅ 需要  │ → RPi5 Pin 6  (GND)
 
-功能:   VCC   --   MOSI  MISO   CS   SCK   --    GND
+═══════════════════════════════════════════════════════════════════════
+  CAN Hack 模块 — 下排 J2 (10针)
+  这一排全部不需要连接（除非需要 5V 供电）
+═══════════════════════════════════════════════════════════════════════
+  针脚  │ Flipper GPIO │  信号     │ 是否需要 │ 备注
+  ──────┼──────────────┼───────────┼─────────┼──────────────────────
+  Pin9  │ 5V           │ 5V 电源   │ ⚡ 可选  │ TJA1050 如需 5V 可接 RPi5 Pin 2
+  Pin10 │ PC1          │ (未使用)  │ ❌ 不用  │
+  Pin11 │ PB14         │ (未使用)  │ ❌ 不用  │
+  Pin12 │ PB15         │ (未使用)  │ ❌ 不用  │
+  Pin13 │ PC0          │ (未使用)  │ ❌ 不用  │
+  Pin14 │ PA14         │ (未使用)  │ ❌ 不用  │
+  Pin15 │ PA13         │ (未使用)  │ ❌ 不用  │
+  Pin16 │ PB6          │ (未使用)  │ ❌ 不用  │
+  Pin17 │ PB7          │ (未使用)  │ ❌ 不用  │
+  Pin18 │ GND          │ 地线      │ ❌ 不用  │ 上排 Pin8 已接 GND
 ```
 
-**接线表：**
+#### 接线汇总（6 根杜邦线）
 
-| CAN Hack 模块引脚 (Flipper 排针) | 信号 | RPi5 GPIO | RPi5 物理引脚 |
-|----------------------------------|------|-----------|--------------|
-| Pin 1 (3V3)                      | VCC  | 3.3V      | Pin 1        |
-| Pin 8 (GND)                      | GND  | GND       | Pin 6        |
-| Pin 6 (PB3 / SCK)                | SCK  | GPIO 11 (SPI0_SCLK) | Pin 23 |
-| Pin 3 (PA7 / MOSI)               | MOSI | GPIO 10 (SPI0_MOSI) | Pin 19 |
-| Pin 4 (PA6 / MISO)               | MISO | GPIO 9 (SPI0_MISO)  | Pin 21 |
-| Pin 5 (PA4 / CS)                  | CS   | GPIO 8 (SPI0_CE0)   | Pin 24 |
+| CAN Hack 模块 (上排 J1) | 信号 | RPi5 GPIO | RPi5 物理引脚 |
+|--------------------------|------|-----------|--------------| 
+| Pin 1 (3V3)              | VCC  | 3.3V      | Pin 1        |
+| Pin 3 (PA7)              | MOSI | GPIO 10 (SPI0_MOSI) | Pin 19 |
+| Pin 4 (PA6)              | MISO | GPIO 9 (SPI0_MISO)  | Pin 21 |
+| Pin 5 (PA4)              | CS   | GPIO 8 (SPI0_CE0)   | Pin 24 |
+| Pin 6 (PB3)              | SCK  | GPIO 11 (SPI0_SCLK) | Pin 23 |
+| Pin 8 (GND)              | GND  | GND       | Pin 6        |
 
-**接线示意图：**
+#### 接线示意图
+
 ```
-CAN Hack 模块                      树莓派 5
-(Flipper GPIO 排针)                (GPIO 排针)
+CAN Hack 模块 (上排 J1)             树莓派 5
+从左到右数                           GPIO 排针
 
-Pin 1 (3V3/VCC) ──────────────── Pin 1  (3.3V)
-Pin 3 (PA7/MOSI) ─────────────── Pin 19 (GPIO10/SPI0_MOSI)
-Pin 4 (PA6/MISO) ─────────────── Pin 21 (GPIO9/SPI0_MISO)
-Pin 5 (PA4/CS)   ─────────────── Pin 24 (GPIO8/SPI0_CE0)
-Pin 6 (PB3/SCK)  ─────────────── Pin 23 (GPIO11/SPI0_SCLK)
-Pin 8 (GND)      ─────────────── Pin 6  (GND)
+Pin 1 (VCC)  ─────── 杜邦线 ──────── Pin 1  (3.3V)
+Pin 3 (MOSI) ─────── 杜邦线 ──────── Pin 19 (GPIO10/SPI0_MOSI)
+Pin 4 (MISO) ─────── 杜邦线 ──────── Pin 21 (GPIO9/SPI0_MISO)
+Pin 5 (CS)   ─────── 杜邦线 ──────── Pin 24 (GPIO8/SPI0_CE0)
+Pin 6 (SCK)  ─────── 杜邦线 ──────── Pin 23 (GPIO11/SPI0_SCLK)
+Pin 8 (GND)  ─────── 杜邦线 ──────── Pin 6  (GND)
 ```
 
-**树莓派 5 GPIO 引脚图（★ = 需要连接的引脚）：**
+#### 树莓派 5 GPIO 引脚图（★ = 需要连接的引脚）
+
 ```
      ┌─────────────────────────┐
-   ★ │  3V3  (1)    (2) 5V    │
+   ★ │  3V3  (1)    (2) 5V    │  ← VCC 接 Pin1; 如需5V给TJA1050接Pin2
      │  GPIO2 (3)    (4) 5V   │
-     │  GPIO3 (5)   ★(6) GND  │
+     │  GPIO3 (5)   ★(6) GND  │  ← GND
      │  GPIO4 (7)    (8) TX   │
      │  GND   (9)   (10) RX   │
      │  GPIO17(11)  (12)GPIO18│
@@ -75,7 +109,15 @@ Pin 8 (GND)      ─────────────── Pin 6  (GND)
      └─────────────────────────┘
 ```
 
-> **注意：** 关于供电 —— Loopback 自测模式用 3.3V 即可。Normal 模式如果无法正常通信，尝试将 VCC 改接 RPi5 的 5V (Pin 2)，因为 TJA1050 CAN 收发器通常需要 5V。
+> **关于供电：**
+> - **Loopback 自测模式**：3.3V（Pin 1）即可，信号不经过 CAN 收发器
+> - **Normal 模式连接真实 CAN 总线**：如果通信异常，将 VCC 改接 RPi5 的 **5V (Pin 2)**，因为 TJA1050 收发器通常需要 5V 驱动
+> - 如果模块有独立的 CAN 收发器供电引脚（下排 J2 Pin 9 = 5V），也可以额外接一根 5V 线
+
+> **关于模块版本：**
+> - 本代码适用于 **MCP2515 + 8 MHz 晶振** 版本的 CAN Hack 模块
+> - ElectronicCats 较新版本使用 MCP251863 + 40 MHz，与本代码**不兼容**
+> - 如果不确定，查看模块上芯片的丝印：`MCP2515` = 兼容，`MCP251863` = 不兼容
 
 ## CAN 总线参数
 
