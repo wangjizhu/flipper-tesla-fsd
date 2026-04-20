@@ -30,6 +30,7 @@ typedef struct {
     MCP2515* mcp_can;
 
     FuriThread* worker_thread;
+    uint8_t test_mode; // 0=loopback, 1=normal
 } CanTesterApp;
 
 CanTesterApp* can_tester_app_alloc(void);

@@ -2,66 +2,86 @@
 #include "../scenes_config/app_scene_functions.h"
 
 // CAN Test configuration
-#define CAN_TEST_TX_ID        0x7E0   // Standard diagnostic request ID
-#define CAN_TEST_INTERVAL_MS  500     // Send every 500ms
-#define CAN_TEST_POLL_MS      2       // Receive poll interval
+#define CAN_TEST_TX_ID        0x7E0
+#define CAN_TEST_INTERVAL_MS  500
+#define CAN_TEST_POLL_MS      2
 
-// Custom events for this scene
 typedef enum {
     CanTestEventUpdate = 100,
     CanTestEventInitFail,
+    CanTestEventInitOk,
 } CanTestEvent;
 
-// Test state shared between worker and UI
+// Test mode: start with loopback, user can switch to normal
+typedef enum {
+    TestModeLoopback = 0,
+    TestModeNormal,
+} TestMode;
+
 typedef struct {
     uint32_t tx_count;
     uint32_t rx_count;
     uint32_t err_count;
-    uint8_t  tx_counter;        // incrementing byte in TX payload
+    uint8_t  tx_counter;
     uint32_t last_rx_id;
     uint8_t  last_rx_len;
     uint8_t  last_rx_data[8];
     bool     running;
+    bool     init_ok;
+    TestMode mode;
+    uint8_t  mcp_mode_reg;  // raw CANSTAT mode bits for diagnostics
 } CanTestState;
 
 static CanTestState test_state;
 
 static int32_t can_test_worker(void* context) {
     CanTesterApp* app = context;
+    if(!app || !app->mcp_can) return 0;
+
     MCP2515* mcp = app->mcp_can;
     CANFRAME tx_frame;
     CANFRAME rx_frame;
 
-    // Configure MCP2515 for standard CAN at 500 kbps
-    mcp->mode = MCP_NORMAL;
+    // Use the selected mode
+    if(test_state.mode == TestModeLoopback) {
+        mcp->mode = MCP_LOOPBACK;
+    } else {
+        mcp->mode = MCP_NORMAL;
+    }
     mcp->bitRate = MCP_500KBPS;
-    mcp->clck = MCP_16MHZ;
+    mcp->clck = MCP_8MHZ;
 
-    if(mcp2515_init(mcp) != ERROR_OK) {
+    ERROR_CAN init_result = mcp2515_init(mcp);
+    if(init_result != ERROR_OK) {
+        test_state.init_ok = false;
         view_dispatcher_send_custom_event(app->view_dispatcher, CanTestEventInitFail);
         return 0;
     }
 
+    test_state.init_ok = true;
+
+    // Read back actual mode register for diagnostics
+    // (mode bits are in CANSTAT register upper 3 bits)
+
     // Clear all masks/filters — accept everything
     init_mask(mcp, 0, 0x000);
     init_mask(mcp, 1, 0x000);
-    init_filter(mcp, 0, 0x000);
-    init_filter(mcp, 1, 0x000);
-    init_filter(mcp, 2, 0x000);
-    init_filter(mcp, 3, 0x000);
-    init_filter(mcp, 4, 0x000);
-    init_filter(mcp, 5, 0x000);
+    for(int i = 0; i < 6; i++) {
+        init_filter(mcp, i, 0x000);
+    }
+
+    // Notify UI that init succeeded
+    view_dispatcher_send_custom_event(app->view_dispatcher, CanTestEventInitOk);
 
     // Prepare TX frame template
     memset(&tx_frame, 0, sizeof(CANFRAME));
     tx_frame.canId = CAN_TEST_TX_ID;
-    tx_frame.data_lenght = 8;
+    tx_frame.data_length = 8;
     tx_frame.ext = 0;
     tx_frame.req = 0;
 
     uint32_t last_tx = 0;
     uint32_t last_ui_update = 0;
-
     test_state.running = true;
 
     while(true) {
@@ -72,7 +92,6 @@ static int32_t can_test_worker(void* context) {
 
         // --- TX: send test frame periodically ---
         if((now - last_tx) >= furi_ms_to_ticks(CAN_TEST_INTERVAL_MS)) {
-            // Build payload: [counter, 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, checksum]
             tx_frame.buffer[0] = test_state.tx_counter;
             tx_frame.buffer[1] = 0xDE;
             tx_frame.buffer[2] = 0xAD;
@@ -80,13 +99,11 @@ static int32_t can_test_worker(void* context) {
             tx_frame.buffer[4] = 0xEF;
             tx_frame.buffer[5] = 0xCA;
             tx_frame.buffer[6] = 0xFE;
-            // Simple checksum: sum of bytes 0-6
             uint8_t sum = 0;
             for(int i = 0; i < 7; i++) sum += tx_frame.buffer[i];
             tx_frame.buffer[7] = sum;
 
-            ERROR_CAN err = send_can_frame(mcp, &tx_frame);
-            if(err == ERROR_OK) {
+            if(send_can_frame(mcp, &tx_frame) == ERROR_OK) {
                 test_state.tx_count++;
                 test_state.tx_counter++;
             } else {
@@ -100,14 +117,14 @@ static int32_t can_test_worker(void* context) {
             if(read_can_message(mcp, &rx_frame) == ERROR_OK) {
                 test_state.rx_count++;
                 test_state.last_rx_id = rx_frame.canId;
-                test_state.last_rx_len = rx_frame.data_lenght;
+                test_state.last_rx_len = rx_frame.data_length;
                 memcpy(test_state.last_rx_data, rx_frame.buffer,
-                       rx_frame.data_lenght > 8 ? 8 : rx_frame.data_lenght);
+                       rx_frame.data_length > 8 ? 8 : rx_frame.data_length);
             }
         }
 
-        // --- UI update every 200ms ---
-        if((now - last_ui_update) >= furi_ms_to_ticks(200)) {
+        // --- UI update ---
+        if((now - last_ui_update) >= furi_ms_to_ticks(300)) {
             view_dispatcher_send_custom_event(app->view_dispatcher, CanTestEventUpdate);
             last_ui_update = now;
         }
@@ -115,32 +132,34 @@ static int32_t can_test_worker(void* context) {
         furi_delay_ms(CAN_TEST_POLL_MS);
     }
 
-    deinit_mcp2515(mcp);
     test_state.running = false;
+    deinit_mcp2515(mcp);
     return 0;
 }
 
 static void can_test_update_widget(CanTesterApp* app) {
     widget_reset(app->widget);
 
-    // Title
+    const char* mode_str = (test_state.mode == TestModeLoopback) ? "LOOPBACK" : "NORMAL";
+
+    // Title with mode
+    char title[32];
+    snprintf(title, sizeof(title), "CAN Test [%s]", mode_str);
     widget_add_string_element(
-        app->widget, 64, 2, AlignCenter, AlignTop, FontPrimary,
-        "CAN Bus Test");
+        app->widget, 64, 2, AlignCenter, AlignTop, FontPrimary, title);
 
     // TX info
     char tx_buf[40];
-    snprintf(tx_buf, sizeof(tx_buf), "TX: %lu  ID:0x%lX  #%u",
+    snprintf(tx_buf, sizeof(tx_buf), "TX: %lu  ERR: %lu",
              (unsigned long)test_state.tx_count,
-             (unsigned long)CAN_TEST_TX_ID,
-             test_state.tx_counter);
+             (unsigned long)test_state.err_count);
     widget_add_string_element(
         app->widget, 2, 16, AlignLeft, AlignTop, FontSecondary, tx_buf);
 
     // RX info
     char rx_buf[40];
     if(test_state.rx_count > 0) {
-        snprintf(rx_buf, sizeof(rx_buf), "RX: %lu  Last:0x%lX [%u]",
+        snprintf(rx_buf, sizeof(rx_buf), "RX: %lu  ID:0x%lX [%u]",
                  (unsigned long)test_state.rx_count,
                  (unsigned long)test_state.last_rx_id,
                  test_state.last_rx_len);
@@ -166,14 +185,13 @@ static void can_test_update_widget(CanTesterApp* app) {
     widget_add_string_element(
         app->widget, 2, 38, AlignLeft, AlignTop, FontSecondary, data_buf);
 
-    // Error count + status
-    char err_buf[40];
-    snprintf(err_buf, sizeof(err_buf), "ERR: %lu  500kbps  Normal",
-             (unsigned long)test_state.err_count);
+    // Status
+    char status_buf[40];
+    snprintf(status_buf, sizeof(status_buf), "500kbps  Init:%s",
+             test_state.init_ok ? "OK" : "FAIL");
     widget_add_string_element(
-        app->widget, 2, 49, AlignLeft, AlignTop, FontSecondary, err_buf);
+        app->widget, 2, 49, AlignLeft, AlignTop, FontSecondary, status_buf);
 
-    // Footer
     widget_add_string_element(
         app->widget, 64, 62, AlignCenter, AlignBottom, FontSecondary,
         "[BACK] stop");
@@ -181,23 +199,27 @@ static void can_test_update_widget(CanTesterApp* app) {
 
 void can_tester_scene_can_test_on_enter(void* context) {
     CanTesterApp* app = context;
-
-    // Reset test state
     memset(&test_state, 0, sizeof(CanTestState));
 
-    // Initial screen
+    // Use mode selected from main menu
+    test_state.mode = (app->test_mode == 1) ? TestModeNormal : TestModeLoopback;
+    const char* mode_label = (test_state.mode == TestModeLoopback) ? "LOOPBACK self-test" : "NORMAL mode";
+
     widget_reset(app->widget);
     widget_add_string_multiline_element(
         app->widget, 64, 20, AlignCenter, AlignCenter, FontPrimary,
         "CAN Bus Test");
+
+    char init_msg[64];
+    snprintf(init_msg, sizeof(init_msg), "%s\n500kbps / 16MHz", mode_label);
     widget_add_string_multiline_element(
-        app->widget, 64, 40, AlignCenter, AlignCenter, FontSecondary,
-        "Initializing MCP2515...\n500kbps / Normal mode");
+        app->widget, 64, 40, AlignCenter, AlignCenter, FontSecondary, init_msg);
     view_dispatcher_switch_to_view(app->view_dispatcher, CanTesterViewWidget);
 
-    // Start worker
-    app->worker_thread = furi_thread_alloc_ex("CanTestWorker", 2048, can_test_worker, app);
-    furi_thread_start(app->worker_thread);
+    if(app->mcp_can) {
+        app->worker_thread = furi_thread_alloc_ex("CanTestWorker", 2048, can_test_worker, app);
+        furi_thread_start(app->worker_thread);
+    }
 }
 
 bool can_tester_scene_can_test_on_event(void* context, SceneManagerEvent event) {
@@ -210,14 +232,18 @@ bool can_tester_scene_can_test_on_event(void* context, SceneManagerEvent event) 
             can_test_update_widget(app);
             consumed = true;
             break;
+        case CanTestEventInitOk:
+            can_test_update_widget(app);
+            consumed = true;
+            break;
         case CanTestEventInitFail:
             widget_reset(app->widget);
             widget_add_string_multiline_element(
-                app->widget, 64, 24, AlignCenter, AlignCenter, FontPrimary,
+                app->widget, 64, 20, AlignCenter, AlignCenter, FontPrimary,
                 "MCP2515 Init Failed!");
             widget_add_string_multiline_element(
                 app->widget, 64, 44, AlignCenter, AlignCenter, FontSecondary,
-                "Check CAN Add-On\nis plugged in");
+                "Check CAN board\nis plugged in correctly");
             consumed = true;
             break;
         }
@@ -227,7 +253,6 @@ bool can_tester_scene_can_test_on_event(void* context, SceneManagerEvent event) 
 
 void can_tester_scene_can_test_on_exit(void* context) {
     CanTesterApp* app = context;
-
     if(app->worker_thread) {
         furi_thread_flags_set(furi_thread_get_id(app->worker_thread), WorkerFlagStop);
         furi_thread_join(app->worker_thread);

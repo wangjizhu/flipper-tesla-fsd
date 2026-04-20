@@ -7,17 +7,19 @@
 #include <furi_hal_spi_config.h>
 
 #define TIMEOUT_SPI 100
+#define CS          &gpio_ext_pa4
+#define SCK         &gpio_ext_pb3
+#define MOSI        &gpio_ext_pa7
+#define MISO        &gpio_ext_pa6
 
-// Use the firmware's built-in external SPI bus handle directly.
-// It already has the correct pins (PA4=CS, PB3=SCK, PA7=MOSI, PA6=MISO)
-// and is properly registered with the SPI bus mutex system.
-// Do NOT allocate your own FuriHalSpiBusHandle — it causes
-// null_pointer_dereference because the firmware's acquire/release
-// expects handles to be part of its managed lifecycle.
+#define BUS        &furi_hal_spi_bus_r
+#define SPEED_8MHZ &furi_hal_spi_preset_1edge_low_8m // 8 MHZ
+#define SPEED_4MHZ &furi_hal_spi_preset_1edge_low_4m // 4 MHZ
+#define SPEED_2MHZ &furi_hal_spi_preset_1edge_low_2m // 2 MHZ
 
 // FUNCTIONS
-// Returns a pointer to the firmware's pre-configured external SPI handle.
-// No allocation needed — it's a firmware global.
-FuriHalSpiBusHandle* spi_alloc(void);
+FuriHalSpiBusHandle* spi_alloc();
+bool spi_send(FuriHalSpiBusHandle* spi, uint8_t* buffer, uint8_t length);
+bool spi_send_and_read(FuriHalSpiBusHandle* spi, uint8_t* action_address, uint8_t addr_len, uint8_t* data_read, uint8_t data_len);
 
 #endif

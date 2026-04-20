@@ -15,7 +15,8 @@ CanTesterApp* can_tester_app_alloc(void) {
     CanTesterApp* app = malloc(sizeof(CanTesterApp));
     memset(app, 0, sizeof(CanTesterApp));
 
-    app->mcp_can = mcp_alloc(MCP_NORMAL, MCP_16MHZ, MCP_500KBPS);
+    // Allocate MCP2515 struct (this calls spi_alloc internally)
+    app->mcp_can = mcp_alloc(MCP_NORMAL, MCP_8MHZ, MCP_500KBPS);
 
     app->gui = furi_record_open(RECORD_GUI);
 
@@ -48,7 +49,10 @@ void can_tester_app_free(CanTesterApp* app) {
 
     furi_record_close(RECORD_GUI);
 
-    free_mcp2515(app->mcp_can);
+    // Skip if mcp_can was not allocated
+    if(app->mcp_can) {
+        free_mcp2515(app->mcp_can);
+    }
     free(app);
 }
 
