@@ -27,8 +27,13 @@ fi
 
 # 3. Install Python dependencies
 echo ""
-echo "► 安装 Python 依赖..."
-pip3 install -r requirements.txt
+echo "► 安装 Python 依赖 (spidev)..."
+if apt list --installed 2>/dev/null | grep -q python3-spidev; then
+    echo "  ✓ python3-spidev 已安装"
+else
+    echo "  正在通过 apt 安装 python3-spidev..."
+    sudo apt install -y python3-spidev
+fi
 echo "  ✓ 依赖安装完成"
 
 # 4. Add current user to spi group (optional, avoids sudo)
