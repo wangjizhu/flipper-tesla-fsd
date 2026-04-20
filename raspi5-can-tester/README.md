@@ -33,26 +33,26 @@ CAN Hack 模块（[ElectronicCats Flipper Add-On: CAN Bus](https://electroniccat
 ```
 ═══════════════════════════════════════════════════════════════════════
   CAN Hack 模块 — 上排 J1 (8针)
-  Flipper Zero 正面朝上、从左到右数
+  Flipper Zero 官方 GPIO 编号（从 Pin1 到 Pin8）
 ═══════════════════════════════════════════════════════════════════════
   针脚 │ Flipper GPIO │  信号     │ 是否需要 │ → 接到 RPi5
   ─────┼──────────────┼───────────┼─────────┼──────────────────────
-  Pin1 │ 3V3          │ VCC 电源  │ ✅ 需要  │ → RPi5 Pin 1  (3.3V)
-  Pin2 │ SWC          │ 调试时钟  │ ❌ 不用  │
-  Pin3 │ PA7          │ SPI MOSI  │ ✅ 需要  │ → RPi5 Pin 19 (GPIO10/SPI0_MOSI)
-  Pin4 │ PA6          │ SPI MISO  │ ✅ 需要  │ → RPi5 Pin 21 (GPIO9/SPI0_MISO)
-  Pin5 │ PA4          │ SPI CS    │ ✅ 需要  │ → RPi5 Pin 24 (GPIO8/SPI0_CE0)
-  Pin6 │ PB3          │ SPI SCK   │ ✅ 需要  │ → RPi5 Pin 23 (GPIO11/SPI0_SCLK)
-  Pin7 │ PB2          │ (未使用)  │ ❌ 不用  │
+  Pin1 │ 5V           │ 5V 电源   │ ✅ 需要  │ → RPi5 Pin 2  (5V)
+  Pin2 │ PA7          │ SPI MOSI  │ ✅ 需要  │ → RPi5 Pin 19 (GPIO10/SPI0_MOSI)
+  Pin3 │ PA6          │ SPI MISO  │ ✅ 需要  │ → RPi5 Pin 21 (GPIO9/SPI0_MISO)
+  Pin4 │ PA4          │ SPI CS    │ ✅ 需要  │ → RPi5 Pin 24 (GPIO8/SPI0_CE0)
+  Pin5 │ PB3          │ SPI SCK   │ ✅ 需要  │ → RPi5 Pin 23 (GPIO11/SPI0_SCLK)
+  Pin6 │ PB2          │ (未使用)  │ ❌ 不用  │
+  Pin7 │ PC3/SWC      │ 调试时钟  │ ❌ 不用  │
   Pin8 │ GND          │ 地线      │ ✅ 需要  │ → RPi5 Pin 6  (GND)
 
 ═══════════════════════════════════════════════════════════════════════
   CAN Hack 模块 — 下排 J2 (10针)
-  这一排全部不需要连接（除非需要 5V 供电）
+  这一排全部不需要连接
 ═══════════════════════════════════════════════════════════════════════
   针脚  │ Flipper GPIO │  信号     │ 是否需要 │ 备注
   ──────┼──────────────┼───────────┼─────────┼──────────────────────
-  Pin9  │ 5V           │ 5V 电源   │ ⚡ 可选  │ TJA1050 如需 5V 可接 RPi5 Pin 2
+  Pin9  │ 3V3          │ 3.3V 电源 │ ❌ 不用  │
   Pin10 │ PC1          │ (未使用)  │ ❌ 不用  │
   Pin11 │ PB14         │ (未使用)  │ ❌ 不用  │
   Pin12 │ PB15         │ (未使用)  │ ❌ 不用  │
@@ -68,24 +68,24 @@ CAN Hack 模块（[ElectronicCats Flipper Add-On: CAN Bus](https://electroniccat
 
 | CAN Hack 模块 (上排 J1) | 信号 | RPi5 GPIO | RPi5 物理引脚 |
 |--------------------------|------|-----------|--------------| 
-| Pin 1 (3V3)              | VCC  | 3.3V      | Pin 1        |
-| Pin 3 (PA7)              | MOSI | GPIO 10 (SPI0_MOSI) | Pin 19 |
-| Pin 4 (PA6)              | MISO | GPIO 9 (SPI0_MISO)  | Pin 21 |
-| Pin 5 (PA4)              | CS   | GPIO 8 (SPI0_CE0)   | Pin 24 |
-| Pin 6 (PB3)              | SCK  | GPIO 11 (SPI0_SCLK) | Pin 23 |
+| Pin 1 (5V)               | VCC  | 5V        | Pin 2        |
+| Pin 2 (PA7)              | MOSI | GPIO 10 (SPI0_MOSI) | Pin 19 |
+| Pin 3 (PA6)              | MISO | GPIO 9 (SPI0_MISO)  | Pin 21 |
+| Pin 4 (PA4)              | CS   | GPIO 8 (SPI0_CE0)   | Pin 24 |
+| Pin 5 (PB3)              | SCK  | GPIO 11 (SPI0_SCLK) | Pin 23 |
 | Pin 8 (GND)              | GND  | GND       | Pin 6        |
 
 #### 接线示意图
 
 ```
 CAN Hack 模块 (上排 J1)             树莓派 5
-从左到右数                           GPIO 排针
+Flipper GPIO 编号                    GPIO 排针
 
-Pin 1 (VCC)  ─────── 杜邦线 ──────── Pin 1  (3.3V)
-Pin 3 (MOSI) ─────── 杜邦线 ──────── Pin 19 (GPIO10/SPI0_MOSI)
-Pin 4 (MISO) ─────── 杜邦线 ──────── Pin 21 (GPIO9/SPI0_MISO)
-Pin 5 (CS)   ─────── 杜邦线 ──────── Pin 24 (GPIO8/SPI0_CE0)
-Pin 6 (SCK)  ─────── 杜邦线 ──────── Pin 23 (GPIO11/SPI0_SCLK)
+Pin 1 (5V)   ─────── 杜邦线 ──────── Pin 2  (5V)
+Pin 2 (MOSI) ─────── 杜邦线 ──────── Pin 19 (GPIO10/SPI0_MOSI)
+Pin 3 (MISO) ─────── 杜邦线 ──────── Pin 21 (GPIO9/SPI0_MISO)
+Pin 4 (CS)   ─────── 杜邦线 ──────── Pin 24 (GPIO8/SPI0_CE0)
+Pin 5 (SCK)  ─────── 杜邦线 ──────── Pin 23 (GPIO11/SPI0_SCLK)
 Pin 8 (GND)  ─────── 杜邦线 ──────── Pin 6  (GND)
 ```
 
@@ -93,26 +93,25 @@ Pin 8 (GND)  ─────── 杜邦线 ──────── Pin 6  (GN
 
 ```
      ┌─────────────────────────┐
-   ★ │  3V3  (1)    (2) 5V    │  ← VCC 接 Pin1; 如需5V给TJA1050接Pin2
+     │  3V3  (1)   ★(2) 5V    │  ← VCC (模块 Pin1=5V)
      │  GPIO2 (3)    (4) 5V   │
-     │  GPIO3 (5)   ★(6) GND  │  ← GND
+     │  GPIO3 (5)   ★(6) GND  │  ← GND (模块 Pin8)
      │  GPIO4 (7)    (8) TX   │
      │  GND   (9)   (10) RX   │
      │  GPIO17(11)  (12)GPIO18│
      │  GPIO27(13)  (14) GND  │
      │  GPIO22(15)  (16)GPIO23│
      │  3V3   (17)  (18)GPIO24│
-   ★ │  GPIO10(19)  (20) GND  │  ← MOSI
-   ★ │  GPIO9 (21)  (22)GPIO25│  ← MISO
-   ★ │  GPIO11(23) ★(24)GPIO8 │  ← SCK, CS
+   ★ │  GPIO10(19)  (20) GND  │  ← MOSI (模块 Pin2)
+   ★ │  GPIO9 (21)  (22)GPIO25│  ← MISO (模块 Pin3)
+   ★ │  GPIO11(23) ★(24)GPIO8 │  ← SCK (模块 Pin5), CS (模块 Pin4)
      │  GND   (25)  (26)GPIO7 │
      └─────────────────────────┘
 ```
 
 > **关于供电：**
-> - **Loopback 自测模式**：3.3V（Pin 1）即可，信号不经过 CAN 收发器
-> - **Normal 模式连接真实 CAN 总线**：如果通信异常，将 VCC 改接 RPi5 的 **5V (Pin 2)**，因为 TJA1050 收发器通常需要 5V 驱动
-> - 如果模块有独立的 CAN 收发器供电引脚（下排 J2 Pin 9 = 5V），也可以额外接一根 5V 线
+> - Flipper Zero 的 Pin 1 = **5V**，所以模块设计为 5V 供电
+> - RPi5 的 5V (Pin 2) 直接连接即可
 
 > **关于模块版本：**
 > - 本代码适用于 **MCP2515 + 8 MHz 晶振** 版本的 CAN Hack 模块
@@ -237,14 +236,14 @@ Ported from the Flipper Zero version, using the same **CAN Hack module**.
 
 | CAN Hack Module Pin (Flipper Header) | Signal | RPi5 GPIO | RPi5 Physical Pin |
 |---------------------------------------|--------|-----------|-------------------|
-| Pin 1 (3V3)                           | VCC    | 3.3V      | Pin 1             |
+| Pin 1 (5V)                            | VCC    | 5V        | Pin 2             |
+| Pin 2 (PA7 / MOSI)                    | MOSI   | GPIO 10 (SPI0_MOSI) | Pin 19 |
+| Pin 3 (PA6 / MISO)                    | MISO   | GPIO 9 (SPI0_MISO)  | Pin 21 |
+| Pin 4 (PA4 / CS)                      | CS     | GPIO 8 (SPI0_CE0)   | Pin 24 |
+| Pin 5 (PB3 / SCK)                     | SCK    | GPIO 11 (SPI0_SCLK) | Pin 23 |
 | Pin 8 (GND)                           | GND    | GND       | Pin 6             |
-| Pin 6 (PB3 / SCK)                     | SCK    | GPIO 11 (SPI0_SCLK) | Pin 23 |
-| Pin 3 (PA7 / MOSI)                    | MOSI   | GPIO 10 (SPI0_MOSI) | Pin 19 |
-| Pin 4 (PA6 / MISO)                    | MISO   | GPIO 9 (SPI0_MISO)  | Pin 21 |
-| Pin 5 (PA4 / CS)                      | CS     | GPIO 8 (SPI0_CE0)   | Pin 24 |
 
-> **Note:** For Normal mode, if CAN bus communication fails, try connecting VCC to RPi5 5V (Pin 2) instead, as the TJA1050 transceiver typically requires 5V.
+> **Note:** Flipper Zero Pin 1 = 5V. The module is designed for 5V power.
 
 ## Quick Setup
 
