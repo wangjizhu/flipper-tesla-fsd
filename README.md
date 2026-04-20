@@ -15,8 +15,8 @@
 
 | 组件 | 说明 |
 |------|------|
-| Flipper Zero | 运行 OFW / Momentum / Unleashed / RogueMaster 固件 |
-| MCP2515 CAN 模块 | SPI 接口 CAN 控制器，8 MHz 晶振 |
+| [Flipper Zero](https://flipper.net/) | 运行 OFW / Momentum / Unleashed / RogueMaster 固件 |
+| [MCP2515 CAN 模块](https://electroniccats.com/store/flipper-addon-canbus/) | SPI 接口 CAN 控制器，8 MHz 晶振 |
 | CAN 收发器 | TJA1050 或类似（通常已集成在 MCP2515 模块上） |
 
 ### 接线方式（Flipper Zero ↔ MCP2515 模块）
@@ -133,8 +133,8 @@ A standalone CAN bus testing application for **Flipper Zero** using the **MCP251
 
 | Component | Description |
 |-----------|-------------|
-| Flipper Zero | Running OFW / Momentum / Unleashed / RogueMaster firmware |
-| MCP2515 CAN Module | SPI-based CAN controller, 8 MHz crystal oscillator |
+| [Flipper Zero](https://flipper.net/) | Running OFW / Momentum / Unleashed / RogueMaster firmware |
+| [MCP2515 CAN Module](https://electroniccats.com/store/flipper-addon-canbus/) | SPI-based CAN controller, 8 MHz crystal oscillator |
 | CAN Transceiver | TJA1050 or similar (usually integrated on MCP2515 module) |
 
 ### Wiring (Flipper Zero ↔ MCP2515 Module)
